@@ -15,43 +15,18 @@ export type FontSource = string | LocalFontSource | RemoteFontSource;
 
 export interface FontFaceData {
 	src: FontSource | Array<FontSource>;
-	/**
-	 * The font-display descriptor.
-	 * @default 'swap'
-	 */
 	display?: "auto" | "block" | "swap" | "fallback" | "optional";
-	/** A font-weight value. */
 	weight?: string | number | [number, number];
-	/** A font-stretch value. */
 	stretch?: string;
-	/** A font-style value. */
 	style?: string;
-	/** The range of Unicode code points to be used from the font. */
-	unicodeRange?: string | string[];
-	/** Allows control over advanced typographic features in OpenType fonts. */
+	unicodeRange?: string[];
 	featureSettings?: string;
-	/** Allows low-level control over OpenType or TrueType font variations, by specifying the four letter axis names of the features to vary, along with their variation values. */
 	variationSettings?: string;
 }
 
-export interface NormalizedFontFaceData
-	extends Omit<FontFaceData, "src" | "unicodeRange"> {
+export interface NormalizedFontFaceData extends Omit<FontFaceData, "src"> {
 	src: Array<LocalFontSource | RemoteFontSource>;
-	unicodeRange?: string[];
 }
-
-export interface FontFallback {
-	family?: string;
-	as: string;
-}
-
-// TODO: Font metric providers
-// export interface FontFaceAdjustments {
-//   ascentOverride?: string // ascent-override
-//   descentOverride?: string // descent-override
-//   lineGapOverride?: string // line-gap-override
-//   sizeAdjust?: string // size-adjust
-// }
 
 export interface ResolveFontFacesOptions {
 	weights: number[];
@@ -63,76 +38,18 @@ export interface ResolveFontFacesOptions {
 
 export interface FontProvider {
 	name: string;
-	/**
-	 * The setup function will be called before the first `resolveFontFaces` call and is a good
-	 * place to register any Nuxt hooks or setup any state.
-	 */
 	setup?: () => Awaitable<void>;
-	/**
-	 * Resolve data for `@font-face` declarations.
-	 *
-	 * If nothing is returned then this provider doesn't handle the font family and we
-	 * will continue calling `resolveFontFaces` in other providers.
-	 */
 	resolveFontFaces: (
 		fontFamily: string,
 		options: ResolveFontFacesOptions,
 	) => Awaitable<{
-		/**
-		 * Return data used to generate @font-face declarations.
-		 * @see https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face
-		 */
 		fonts: FontFaceData[];
 		fallbacks?: string[];
 	}>;
 }
 
-export interface FontFamilyOverrides {
-	/** The font family to apply this override to. */
-	name: string;
-	/** Inject `@font-face` regardless of usage in project. */
-	global?: boolean;
-	/**
-	 * Enable or disable adding preload links to the initially rendered HTML.
-	 * This is true by default for the highest priority format unless a font is subsetted (to avoid over-preloading).
-	 */
-	preload?: boolean;
-
-	// TODO:
-	// as?: string
-}
-export interface FontFamilyProviderOverride
-		extends FontFamilyOverrides,
-			Partial<ResolveFontFacesOptions> {
-		/** The provider to use when resolving this font. */
-		provider?: string;
-	}
-
-export interface FontFamilyManualOverride
-	extends FontFamilyOverrides,
-		FontFaceData {
-	/** Font families to generate fallback metrics for. */
-	fallbacks?: string[];
-}
-
 export interface IntegrationOptions {
-	/**
-	 * Specify overrides for individual font families.
-	 *
-	 * ```ts
-	 * fonts: {
-	 *   families: [
-	 *     // do not resolve this font with any provider from `@nuxt/fonts`
-	 *     { name: 'Custom Font', provider: 'none' },
-	 *     // only resolve this font with the `google` provider
-	 *     { name: 'My Font Family', provider: 'google' },
-	 *     // specify specific font data
-	 *     { name: 'Other Font', src: 'https://example.com/font.woff2' },
-	 *   ]
-	 * }
-	 * ```
-	 */
-	families: Array<FontFamilyManualOverride | FontFamilyProviderOverride>;
+	families: Array<FontFamily>;
 	// defaults?: Partial<{
 	// 	preload: boolean;
 	// 	weights: Array<string | number>;
@@ -141,14 +58,21 @@ export interface IntegrationOptions {
 	// 	fallbacks?: Partial<Record<GenericCSSFamily, string[]>>;
 	// }>;
 	providers: Array<FontProvider>;
-	/** Configure the way font assets are exposed */
-	// assets: {
-	// 	/**
-	// 	 * The baseURL where font files are served.
-	// 	 * @default '/_fonts/'
-	// 	 */
-	// 	prefix?: string;
-	// 	/** Currently font assets are exposed as public assets as part of the build. This will be configurable in future */
-	// 	strategy?: "public";
-	// };
 }
+
+export type FontFamily = {
+	name: string;
+	display?: "auto" | "block" | "swap" | "fallback" | "optional";
+	stretch?: string;
+	unicodeRange?: string | string[];
+	featureSettings?: string;
+	variationSettings?: string;
+} & Partial<ResolveFontFacesOptions> &
+	(
+		| {
+				provider: string;
+		  }
+		| {
+				src: string;
+		  }
+	);

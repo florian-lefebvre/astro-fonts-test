@@ -43,6 +43,7 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 		name: "package-name",
 		hooks: {
 			"astro:config:setup": async (params) => {
+				// Preload providers
 				for (const provider of options.providers) {
 					await provider.setup?.();
 				}
@@ -57,7 +58,7 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 						(p) => p.name === family.provider,
 					);
 					if (!provider) {
-						throw new Error("no matching provider");
+						throw new Error(`No matching provider for "${family.provider}"`);
 					}
 					const result = await provider.resolveFontFaces(family.name, {
 						weights: [...DEFAULT_VALUES.weights, ...(family.weights ?? [])],

@@ -13,7 +13,7 @@ export default defineConfig({
 			providers: [googleProvider()],
 			families: [
 				{
-					name: "Inter",
+					name: "Roboto",
 					provider: "google",
 				},
 			],
