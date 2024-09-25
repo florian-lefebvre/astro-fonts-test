@@ -1,4 +1,4 @@
 import { integration } from "./integration.js";
-export { googleProvider } from "./integration.js";
+export * from "./providers/index.js";
 
 export default integration;
