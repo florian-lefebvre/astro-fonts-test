@@ -15,6 +15,13 @@ const { title } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<link
+			rel="preload"
+			as="font"
+			crossorigin="anonymous"
+			href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZs.woff"
+			type="font/woff"
+		/>
 	</head>
 	<body>
 		<slot />

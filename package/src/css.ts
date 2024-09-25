@@ -1,5 +1,6 @@
 import { findAll, parse, type Declaration } from "css-tree";
 import type {
+	FontFaceData,
 	FontSource,
 	LocalFontSource,
 	NormalizedFontFaceData,
@@ -320,7 +321,7 @@ export function addLocalFallbacks(
 	return data;
 }
 
-export function generateFontFace(family: string, font: NormalizedFontFaceData) {
+export function generateFontFace(family: string, font: FontFaceData) {
 	return [
 		"@font-face {",
 		`  font-family: '${family}';`,

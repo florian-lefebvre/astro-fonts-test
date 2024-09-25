@@ -54,7 +54,7 @@ export interface FontFallback {
 // }
 
 export interface ResolveFontFacesOptions {
-	weights: string[];
+	weights: number[];
 	styles: Array<"normal" | "italic" | "oblique">;
 	// TODO: improve support and support unicode range
 	subsets: string[];
@@ -102,15 +102,11 @@ export interface FontFamilyOverrides {
 	// as?: string
 }
 export interface FontFamilyProviderOverride
-	extends FontFamilyOverrides,
-		Partial<
-			Omit<ResolveFontFacesOptions, "weights"> & {
-				weights: Array<string | number>;
-			}
-		> {
-	/** The provider to use when resolving this font. */
-	provider?: string;
-}
+		extends FontFamilyOverrides,
+			Partial<ResolveFontFacesOptions> {
+		/** The provider to use when resolving this font. */
+		provider?: string;
+	}
 
 export interface FontFamilyManualOverride
 	extends FontFamilyOverrides,
@@ -136,9 +132,7 @@ export interface IntegrationOptions {
 	 * }
 	 * ```
 	 */
-	// families: Array<FontFamilyManualOverride | FontFamilyProviderOverride>;
-	families: Array<FontFamilyProviderOverride>;
-	// defaults?: Partial<{
+	families: Array<FontFamilyManualOverride | FontFamilyProviderOverride>;
 	// defaults?: Partial<{
 	// 	preload: boolean;
 	// 	weights: Array<string | number>;
