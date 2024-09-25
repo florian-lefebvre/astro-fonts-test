@@ -35,7 +35,6 @@ export const googleProvider = (): FontProvider => {
 			).familyMetadataList;
 		},
 		// TODO: cache
-		// "<cacheDir>/fonts/meta/<provider>-<fontFamily>-<hash>.json" => Array<Font>
 		// "<cacheDir>/fonts/data/<filename>" => Buffer
 		resolveFontFaces: async (fontFamily, options) => {
 			const font = fonts.find((f) => f.family === fontFamily);
@@ -64,14 +63,12 @@ export const googleProvider = (): FontProvider => {
 			let css = "";
 
 			for (const extension in USER_AGENTS) {
-				css += await fetch(
-					`https://fonts.googleapis.com/css2?family=${encodeURIComponent(`${fontFamily}:ital,wght@${resolvedVariants.join(";")}`)}`,
-					{
-						headers: {
-							"user-agent": USER_AGENTS[extension as keyof typeof USER_AGENTS],
-						},
+				const url = `https://fonts.googleapis.com/css2?family=${`${fontFamily}:ital,wght@${resolvedVariants.join(";")}`}`;
+				css += await fetch(url, {
+					headers: {
+						"user-agent": USER_AGENTS[extension as keyof typeof USER_AGENTS],
 					},
-				).then((res) => res.text());
+				}).then((res) => res.text());
 			}
 
 			return {

@@ -35,10 +35,7 @@ const styleMap: Record<string, string> = {
 	normal: "",
 };
 
-export function extractFontFaceData(
-	css: string,
-	family?: string,
-): NormalizedFontFaceData[] {
+export function extractFontFaceData(css: string): NormalizedFontFaceData[] {
 	const fontFaces: NormalizedFontFaceData[] = [];
 
 	for (const node of findAll(
@@ -47,33 +44,6 @@ export function extractFontFaceData(
 	)) {
 		if (node.type !== "Atrule" || node.name !== "font-face") {
 			continue;
-		}
-
-		if (family) {
-			const isCorrectFontFace = node.block?.children.some((child) => {
-				if (child.type !== "Declaration" || child.property !== "font-family") {
-					return false;
-				}
-
-				const value = extractCSSValue(child) as string | string[];
-				const slug = family.toLowerCase();
-				if (typeof value === "string" && value.toLowerCase() === slug) {
-					return true;
-				}
-				if (
-					Array.isArray(value) &&
-					value.length > 0 &&
-					value.some((v) => v.toLowerCase() === slug)
-				) {
-					return true;
-				}
-				return false;
-			});
-
-			// Don't extract font face data from this `@font-face` rule if it doesn't match the specified family
-			if (!isCorrectFontFace) {
-				continue;
-			}
 		}
 
 		const data: Partial<NormalizedFontFaceData> = {};
