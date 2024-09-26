@@ -1,5 +1,5 @@
 ---
-const { default: Fonts } = await import("package-name/Fonts.astro")
+const { default: Font } = await import("package-name/Font.astro")
 
 interface Props {
 	title: string;
@@ -17,7 +17,8 @@ const { title } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-		<Fonts families={["Inter", "Lato"]} preload={["Inter"]} />
+		<Font family="Inter" preload />
+		<Font family="Lato" preload />
 	</head>
 	<body>
 		<slot />

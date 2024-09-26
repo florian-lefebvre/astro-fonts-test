@@ -3,19 +3,19 @@ import { extname } from "node:path";
 import { css, hashes } from "virtual:package-name/data";
 
 interface Props {
-	families: Array<string>;
-	preload: Array<string>;
+	family: string;
+	preload?: boolean;
 }
 
-const { families, preload } = Astro.props;
+const { family, preload = false } = Astro.props;
 
 const styling = Object.entries(css)
-	.filter(([key]) => families.includes(key))
+	.filter(([key]) => key === family)
 	.map(([, value]) => value)
 	.join("\n");
-const preloads = Object.entries(hashes)
-	.filter(([, { fontFamily }]) => preload.includes(fontFamily))
-	.map(([hash, { url }]) => ({ url: `/_fonts/${hash}`, type: extname(url).slice(1) }));
+const preloads = preload ? Object.entries(hashes)
+	.filter(([, { fontFamily }]) => fontFamily === family)
+	.map(([hash, { url }]) => ({ url: `/_fonts/${hash}`, type: extname(url).slice(1) })) : [];
 ---
 
 <style set:html={styling} />
