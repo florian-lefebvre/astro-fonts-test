@@ -16,7 +16,6 @@ const styling = Object.entries(css)
 const preloads = Object.entries(hashes)
 	.filter(([, { fontFamily }]) => preload.includes(fontFamily))
 	.map(([hash, { url }]) => ({ url: `/_fonts/${hash}`, type: extname(url).slice(1) }));
-console.log(hashes);
 ---
 
 <style set:html={styling} />

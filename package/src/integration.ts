@@ -125,7 +125,6 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 						css[family.name] ??= "";
 						css[family.name] += generateFontFace(family.name, font);
 					}
-					// console.log(css);
 				}
 				addVirtualImports(params, {
 					name: "package-name",
