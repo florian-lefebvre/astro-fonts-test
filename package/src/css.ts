@@ -295,7 +295,6 @@ export function generateFontFace(family: string, font: FontFaceData) {
 	return [
 		"@font-face {",
 		`  font-family: '${family}';`,
-		// @ts-expect-error TODO:
 		`  src: ${renderFontSrc(font.src)};`,
 		`  font-display: ${font.display || "swap"};`,
 		font.unicodeRange && `  unicode-range: ${font.unicodeRange};`,
@@ -314,19 +313,37 @@ export function generateFontFace(family: string, font: FontFaceData) {
 		.join("\n");
 }
 
-function renderFontSrc(sources: Exclude<FontSource, string>[]) {
-	return sources
-		.map((src) => {
-			if ("url" in src) {
-				let rendered = `url("${src.url}")`;
-				for (const key of ["format", "tech"] as const) {
-					if (key in src) {
-						rendered += ` ${key}(${src[key]})`;
-					}
+function renderFontSrc(source: FontSource | FontSource[]): string {
+	if (Array.isArray(source)) {
+		return source
+			.map((src) => {
+				if (typeof src === "string") {
+					return `url("${src}")`;
 				}
-				return rendered;
+				if ("url" in src) {
+					let rendered = `url("${src.url}")`;
+					for (const key of ["format", "tech"] as const) {
+						if (key in src) {
+							rendered += ` ${key}(${src[key]})`;
+						}
+					}
+					return rendered;
+				}
+				return `local("${src.name}")`;
+			})
+			.join(", ");
+	}
+	if (typeof source === "string") {
+		return `url("${source}")`;
+	}
+	if ("url" in source) {
+		let rendered = `url("${source.url}")`;
+		for (const key of ["format", "tech"] as const) {
+			if (key in source) {
+				rendered += ` ${key}(${source[key]})`;
 			}
-			return `local("${src.name}")`;
-		})
-		.join(", ");
+		}
+		return rendered;
+	}
+	return `local("${source.name}")`;
 }

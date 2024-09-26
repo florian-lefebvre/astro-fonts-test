@@ -26,6 +26,9 @@ importers:
       css-tree:
         specifier: ^3.0.0
         version: 3.0.0
+      tinyglobby:
+        specifier: ^0.2.6
+        version: 0.2.6
       xxhash-wasm:
         specifier: ^1.0.2
         version: 1.0.2

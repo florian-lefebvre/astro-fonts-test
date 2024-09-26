@@ -1,3 +1,5 @@
+import type { AstroConfig } from "astro";
+
 export type Awaitable<T> = T | Promise<T>;
 
 export interface RemoteFontSource {
@@ -38,7 +40,7 @@ export interface ResolveFontFacesOptions {
 
 export interface FontProvider {
 	name: string;
-	setup?: () => Awaitable<void>;
+	setup?: (config: AstroConfig) => Awaitable<void>;
 	resolveFontFaces: (
 		fontFamily: string,
 		options: ResolveFontFacesOptions,

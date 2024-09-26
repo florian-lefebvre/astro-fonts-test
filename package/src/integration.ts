@@ -4,7 +4,7 @@ import type { FontFaceData, IntegrationOptions } from "./types.js";
 import { generateFontFace } from "./css.ts";
 import { createCache } from "./cache.ts";
 import { extname } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 function extractFontSrc(
@@ -56,7 +56,11 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 				);
 
 				getFont = (hash, url) =>
-					bufferCache(`./fonts/meta/${hash}${extname(url)}`, async () => {
+					bufferCache(`./fonts/data/${hash}${extname(url)}`, async () => {
+						if (url.startsWith("file:///")) {
+							console.log({ url });
+							return await readFile(fileURLToPath(url));
+						}
 						return await fetch(url)
 							.then((res) => res.arrayBuffer())
 							.then((res) => Buffer.from(res));
@@ -85,7 +89,7 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 
 				// Preload providers
 				for (const provider of options.providers) {
-					await provider.setup?.();
+					await provider.setup?.(params.config);
 				}
 
 				const css: Record<string, string> = {};
@@ -125,6 +129,7 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 						css[family.name] += generateFontFace(family.name, font);
 					}
 				}
+
 				addVirtualImports(params, {
 					name: "package-name",
 					imports: [
