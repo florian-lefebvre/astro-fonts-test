@@ -1,10 +1,11 @@
 ---
 import Card from "../components/Card.astro";
 import Layout from "../layouts/Layout.astro";
-import "virtual:package-name.css"
+import { css } from "virtual:package-name/css"
 ---
 
 <Layout title="Welcome to Astro.">
+	{Object.values(css).map(e => <style set:html={e} />)}
 	<main>
 		<svg
 			class="astro-a"

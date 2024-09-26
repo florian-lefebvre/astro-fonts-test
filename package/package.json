@@ -39,10 +39,12 @@
 	},
 	"dependencies": {
 		"astro-integration-kit": "^0.16.1",
-		"css-tree": "^3.0.0"
+		"css-tree": "^3.0.0",
+		"xxhash-wasm": "^1.0.2"
 	},
 	"devDependencies": {
 		"@types/css-tree": "^2.3.8",
+		"@types/node": "^20.16.5",
 		"tsup": "^8.3.0"
 	}
 }

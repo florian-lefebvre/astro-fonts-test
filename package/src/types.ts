@@ -33,7 +33,7 @@ export interface ResolveFontFacesOptions {
 	styles: Array<"normal" | "italic" | "oblique">;
 	// TODO: improve support and support unicode range
 	subsets: string[];
-	fallbacks: string[];
+	// fallbacks: string[];
 }
 
 export interface FontProvider {
@@ -44,7 +44,6 @@ export interface FontProvider {
 		options: ResolveFontFacesOptions,
 	) => Awaitable<{
 		fonts: FontFaceData[];
-		fallbacks?: string[];
 	}>;
 }
 
@@ -62,17 +61,22 @@ export interface IntegrationOptions {
 
 export type FontFamily = {
 	name: string;
-	display?: "auto" | "block" | "swap" | "fallback" | "optional";
-	stretch?: string;
-	unicodeRange?: string | string[];
-	featureSettings?: string;
-	variationSettings?: string;
-} & Partial<ResolveFontFacesOptions> &
-	(
-		| {
-				provider: string;
-		  }
-		| {
-				src: string;
-		  }
-	);
+	// display?: "auto" | "block" | "swap" | "fallback" | "optional";
+	// stretch?: string;
+	// unicodeRange?: string | string[];
+	// featureSettings?: string;
+	// variationSettings?: string;
+	// } & Partial<ResolveFontFacesOptions> &
+	// 	(
+	// 		| {
+	// 				provider: string;
+	// 				src?: never;
+	// 		  }
+	// 		| {
+	// 				provider?: never;
+	// 				src: string;
+	// 		  }
+	// 	);
+} & ResolveFontFacesOptions & {
+		provider: string;
+	};

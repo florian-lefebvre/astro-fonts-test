@@ -1,5 +1,6 @@
 import { addLocalFallbacks, extractFontFaceData } from "../css.ts";
 import type { FontProvider } from "../types.js";
+import { writeFileSync } from "node:fs";
 
 const STYLE_MAP = {
 	italic: "1",
@@ -25,7 +26,6 @@ export const googleProvider = (): FontProvider => {
 
 	return {
 		name: "google",
-		// TODO: cache
 		// TODO: cache.set('fonts', fonts)
 		setup: async () => {
 			fonts = (
@@ -34,8 +34,6 @@ export const googleProvider = (): FontProvider => {
 				)
 			).familyMetadataList;
 		},
-		// TODO: cache
-		// "<cacheDir>/fonts/data/<filename>" => Buffer
 		resolveFontFaces: async (fontFamily, options) => {
 			const font = fonts.find((f) => f.family === fontFamily);
 			if (!font) {
@@ -50,7 +48,11 @@ export const googleProvider = (): FontProvider => {
 				? [`${variableWeight.min}..${variableWeight.max}`]
 				: options.weights.filter((weight) => weight in font.fonts);
 
-			if (weights.length === 0 || styles.length === 0) {
+			if (
+				weights.length === 0 ||
+				styles.length === 0 ||
+				options.subsets.length === 0
+			) {
 				return {
 					fonts: [],
 				};
@@ -62,8 +64,8 @@ export const googleProvider = (): FontProvider => {
 
 			let css = "";
 
+			const url = `https://fonts.googleapis.com/css2?family=${`${fontFamily}:ital,wght@${resolvedVariants.join(";")}&subset=${options.subsets.join(",")}`}`;
 			for (const extension in USER_AGENTS) {
-				const url = `https://fonts.googleapis.com/css2?family=${`${fontFamily}:ital,wght@${resolvedVariants.join(";")}`}`;
 				css += await fetch(url, {
 					headers: {
 						"user-agent": USER_AGENTS[extension as keyof typeof USER_AGENTS],
@@ -71,8 +73,21 @@ export const googleProvider = (): FontProvider => {
 				}).then((res) => res.text());
 			}
 
+			const extracted = extractFontFaceData(css);
+			const parsedFonts = addLocalFallbacks(fontFamily, extracted);
+
+			writeFileSync(new URL("../css.css", import.meta.url), css);
+			writeFileSync(
+				new URL("../extracted.json", import.meta.url),
+				JSON.stringify(extracted, null, 2),
+			);
+			writeFileSync(
+				new URL("../parsed.json", import.meta.url),
+				JSON.stringify(parsedFonts, null, 2),
+			);
+
 			return {
-				fonts: addLocalFallbacks(fontFamily, extractFontFaceData(css)),
+				fonts: parsedFonts,
 			};
 		},
 	};

@@ -15,6 +15,9 @@ export default defineConfig({
 				{
 					name: "Roboto",
 					provider: "google",
+					weights: [400, 500],
+					styles: ["normal"],
+					subsets: ["latin"],
 				},
 			],
 		}),

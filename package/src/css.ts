@@ -295,6 +295,7 @@ export function generateFontFace(family: string, font: FontFaceData) {
 	return [
 		"@font-face {",
 		`  font-family: '${family}';`,
+		// @ts-expect-error TODO:
 		`  src: ${renderFontSrc(font.src)};`,
 		`  font-display: ${font.display || "swap"};`,
 		font.unicodeRange && `  unicode-range: ${font.unicodeRange};`,

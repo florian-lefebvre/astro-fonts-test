@@ -1,65 +1,86 @@
-import type { AstroIntegration } from "astro";
+import type { AstroIntegration, HookParameters } from "astro";
 import { addVirtualImports } from "astro-integration-kit";
 import type { FontFaceData, IntegrationOptions } from "./types.js";
 import { generateFontFace } from "./css.ts";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { deterministicString, shorthash } from "./hash.ts";
+import { createCache } from "./cache.ts";
+import { extname } from "node:path";
 
-const DEFAULT_VALUES = {
-	weights: [400],
-	styles: ["normal", "italic"] as const,
-	subsets: [
-		"cyrillic-ext",
-		"cyrillic",
-		"greek-ext",
-		"greek",
-		"vietnamese",
-		"latin-ext",
-		"latin",
-	],
-	fallbacks: {
-		serif: ["Times New Roman"],
-		"sans-serif": ["Arial"],
-		monospace: ["Courier New"],
-		cursive: [],
-		fantasy: [],
-		"system-ui": [
-			"BlinkMacSystemFont",
-			"Segoe UI",
-			"Roboto",
-			"Helvetica Neue",
-			"Arial",
-		],
-		"ui-serif": ["Times New Roman"],
-		"ui-sans-serif": ["Arial"],
-		"ui-monospace": ["Courier New"],
-		"ui-rounded": [],
-		emoji: [],
-		math: [],
-		fangsong: [],
-	},
-};
+function extractFontSrc(
+	font: Pick<FontFaceData, "src">,
+	generateDigest: (data: string) => string,
+): Array<{ hash: string; url: string }> {
+	if (typeof font.src === "string") {
+		const url = font.src;
+		const hash = generateDigest(url);
+		font.src = `/_fonts/${hash}`;
+		return [
+			{
+				hash,
+				url,
+			},
+		];
+	}
+
+	if ("name" in font.src) {
+		return [];
+	}
+
+	if ("url" in font.src) {
+		const url = font.src.url;
+		const hash = generateDigest(url);
+		font.src.url = `/_fonts/${hash}`;
+		return [
+			{
+				hash,
+				url,
+			},
+		];
+	}
+
+	// TODO: check if it works
+	return font.src.flatMap((src) => extractFontSrc({ src }, generateDigest));
+}
 
 export const integration = (options: IntegrationOptions): AstroIntegration => {
-	let hashes: Array<string>;
+	const hashes = new Map<string, string>();
+	let setupParams: HookParameters<"astro:config:setup">;
 
 	return {
 		name: "package-name",
 		hooks: {
 			"astro:config:setup": async (params) => {
+				setupParams = params;
+				const { generateDigest, jsonCache } = await createCache(
+					params.config.cacheDir,
+				);
+
+				const collectFonts = (fonts: Array<FontFaceData>) => {
+					const extracted: Array<{ hash: string; url: string }> = fonts.flatMap(
+						(font) => extractFontSrc(font, generateDigest),
+					);
+					const deduplicated = extracted.reduce(
+						(acc, current) => {
+							if (!acc.some((item) => item.hash === current.hash)) {
+								acc.push(current);
+							}
+							return acc;
+						},
+						[] as Array<{ hash: string; url: string }>,
+					);
+					for (const { hash, url } of deduplicated) {
+						hashes.set(hash, url);
+					}
+				};
+
 				// Preload providers
 				for (const provider of options.providers) {
 					await provider.setup?.();
 				}
 
-				let css = "";
+				const css: Record<string, string> = {};
+
 				for (const family of options.families) {
 					// TODO: handle local images
-					if (!("provider" in family)) {
-						continue;
-					}
 					const provider = options.providers.find(
 						(p) => p.name === family.provider,
 					);
@@ -67,83 +88,30 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 						throw new Error(`No matching provider for "${family.provider}"`);
 					}
 					const fontFacesOptions = {
-						weights: [...DEFAULT_VALUES.weights, ...(family.weights ?? [])],
-						styles: [...DEFAULT_VALUES.styles, ...(family.styles ?? [])],
-						subsets: [...DEFAULT_VALUES.subsets, ...(family.subsets ?? [])],
-						fallbacks: [
-							// TODO: handle
-							// ...DEFAULT_VALUES.fallbacks,
-							...(family.fallbacks ?? []),
-						],
+						weights: family.weights,
+						styles: family.styles,
+						subsets: family.subsets,
 					};
-					const hash = shorthash(
-						deterministicString([
-							provider.name,
-							family.name,
-							JSON.stringify(fontFacesOptions),
-						]),
+					const result = await jsonCache(
+						`./fonts/meta/${generateDigest({
+							provider: provider.name,
+							fontFamily: family.name,
+							weights: fontFacesOptions.weights,
+							styles: fontFacesOptions.styles,
+							subsets: fontFacesOptions.subsets,
+						} satisfies Record<
+							keyof typeof fontFacesOptions | (string & {}),
+							// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+							any
+						>)}.json`,
+						async () =>
+							await provider.resolveFontFaces(family.name, fontFacesOptions),
 					);
-					const metaUrl = new URL(
-						`./fonts/meta/${hash}.json`,
-						params.config.cacheDir,
-					);
-					let result: {
-						fonts: FontFaceData[];
-						fallbacks?: string[];
-					};
-					if (fs.existsSync(metaUrl)) {
-						result = JSON.parse(fs.readFileSync(metaUrl, "utf-8"));
-					} else {
-						result = await provider.resolveFontFaces(
-							family.name,
-							fontFacesOptions,
-						);
-						fs.mkdirSync(path.dirname(fileURLToPath(metaUrl)), {
-							recursive: true,
-						});
-						fs.writeFileSync(metaUrl, JSON.stringify(result, null, 2), "utf-8");
-					}
+
+					collectFonts(result.fonts);
 
 					for (const font of result.fonts) {
-						const allUrls: Array<string> = (() => {
-							if (Array.isArray(font.src)) {
-								return font.src.flatMap((src) => {
-									if (typeof src === "string") {
-										return [src];
-									}
-									if ("name" in src) {
-										return [];
-									}
-									return [src.url];
-								});
-							}
-							if (typeof font.src === "string") {
-								return [font.src];
-							}
-							if ("name" in font.src) {
-								return [];
-							}
-							return [font.src.url];
-						})();
-						for (const originalURL of allUrls) {
-							const dataUrl = new URL(
-								`./fonts/data/${shorthash(deterministicString([originalURL]))}.${path.extname(originalURL)}`,
-								params.config.cacheDir,
-							);
-							if (!fs.existsSync(dataUrl)) {
-								fs.mkdirSync(path.dirname(fileURLToPath(dataUrl)), {
-									recursive: true,
-								});
-								fs.writeFileSync(
-									dataUrl,
-									Buffer.from(
-										await fetch(originalURL).then((res) => res.arrayBuffer()),
-									),
-								);
-							}
-						}
-						// console.log(font.src);
-						css += `${generateFontFace(family.name, font)}\n`;
+						css[family.name] = generateFontFace(family.name, font);
 					}
 					// console.log(css);
 				}
@@ -151,49 +119,38 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 					name: "package-name",
 					imports: [
 						{
-							id: "virtual:package-name.css",
-							content: css,
+							id: "virtual:package-name/css",
+							content: `export const css = ${JSON.stringify(css)}`,
 							context: "server",
 						},
 					],
 				});
 			},
-			"astro:server:setup": (params) => {
+			"astro:server:setup": async (params) => {
+				const { bufferCache } = await createCache(setupParams.config.cacheDir);
+
 				const ONE_YEAR_IN_SECONDS = 60 * 60 * 24 * 365;
 				params.server.middlewares.use("/_fonts", async (req, res, next) => {
 					if (!req.url) {
 						return next();
 					}
-					const filename = req.url.slice(1);
-					const hash = hashes.find((hash) => hash === filename);
-					if (!hash) {
+					const hash = req.url.slice(1);
+					const url = hashes.get(hash);
+					if (!url) {
 						return next();
 					}
-					const key = `data:fonts:${filename}`;
-					let storageRes = await storage.getItemRaw(key);
-					if (!storageRes) {
-						storageRes = await fetch(hash)
-							.then((r) => r.arrayBuffer())
-							.then((r) => Buffer.from(r));
-						await storage.setItemRaw(key, storageRes);
-					}
+					const data = await bufferCache(
+						`./fonts/meta/${hash}.${extname(url)}`,
+						async () => {
+							return await fetch(url)
+								.then((res) => res.arrayBuffer())
+								.then((res) => Buffer.from(res));
+						},
+					);
 					res.setHeader("Cache-Control", `max-age=${ONE_YEAR_IN_SECONDS}`);
-					res.end(storageRes);
+					res.end(data);
 				});
 			},
 		},
 	};
 };
-
-/*
-register providers
-register font families
-download font file to cachedir
-generate css => pass to virtual module
-optional preload
-fallback
-
-<Fonts preload="roboto" />
-<Fonts preload={["roboto"]} />
-
-*/
