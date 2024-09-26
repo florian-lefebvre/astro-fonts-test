@@ -39,7 +39,6 @@ function extractFontSrc(
 		];
 	}
 
-	// TODO: check if it works
 	return font.src.flatMap((src) => extractFontSrc({ src }, generateDigest));
 }
 
@@ -120,7 +119,8 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 					collectFonts(result.fonts);
 
 					for (const font of result.fonts) {
-						css[family.name] = generateFontFace(family.name, font);
+						css[family.name] ??= "";
+						css[family.name] += generateFontFace(family.name, font);
 					}
 					// console.log(css);
 				}
@@ -128,8 +128,8 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 					name: "package-name",
 					imports: [
 						{
-							id: "virtual:package-name/css",
-							content: `export const css = ${JSON.stringify(css)}`,
+							id: "virtual:package-name/data",
+							content: `export const css = ${JSON.stringify(css)}; export const hashes = ${JSON.stringify(Object.fromEntries(hashes.entries()))};`,
 							context: "server",
 						},
 					],

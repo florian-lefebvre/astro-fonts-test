@@ -1,0 +1,13 @@
+---
+import { css, hashes } from "virtual:package-name/data";
+
+interface Props {
+    families: Array<string>
+    preload: Array<string>
+}
+
+const { families, preload } = Astro.props
+
+const styling = Object.entries(css).filter(([key]) => families.includes(key)).map(([, value]) => value).join("\n")
+---
+<style set:html={styling} />

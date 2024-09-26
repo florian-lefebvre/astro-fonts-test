@@ -1,6 +1,5 @@
 import { addLocalFallbacks, extractFontFaceData } from "../css.ts";
 import type { FontProvider } from "../types.js";
-import { writeFileSync } from "node:fs";
 
 const STYLE_MAP = {
 	italic: "1",
@@ -75,16 +74,6 @@ export const googleProvider = (): FontProvider => {
 
 			const extracted = extractFontFaceData(css);
 			const parsedFonts = addLocalFallbacks(fontFamily, extracted);
-
-			writeFileSync(new URL("../css.css", import.meta.url), css);
-			writeFileSync(
-				new URL("../extracted.json", import.meta.url),
-				JSON.stringify(extracted, null, 2),
-			);
-			writeFileSync(
-				new URL("../parsed.json", import.meta.url),
-				JSON.stringify(parsedFonts, null, 2),
-			);
 
 			return {
 				fonts: parsedFonts,

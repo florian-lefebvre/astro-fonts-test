@@ -13,7 +13,7 @@ export default defineConfig({
 			providers: [googleProvider()],
 			families: [
 				{
-					name: "Roboto",
+					name: "DM Sans",
 					provider: "google",
 					weights: [400, 500],
 					styles: ["normal"],

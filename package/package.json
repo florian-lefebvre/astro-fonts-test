@@ -24,10 +24,12 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
-		}
+		},
+		"./Fonts.astro": "./assets/Fonts.astro"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"assets"
 	],
 	"scripts": {
 		"dev": "tsup --watch",

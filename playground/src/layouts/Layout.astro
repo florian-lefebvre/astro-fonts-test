@@ -1,4 +1,6 @@
 ---
+const { default: Fonts } = await import("package-name/Fonts.astro")
+
 interface Props {
 	title: string;
 }
@@ -22,6 +24,7 @@ const { title } = Astro.props;
 			href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZs.woff"
 			type="font/woff"
 		/>
+		<Fonts families={["DM Sans"]} preload={[]} />
 	</head>
 	<body>
 		<slot />

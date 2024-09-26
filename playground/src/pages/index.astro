@@ -1,11 +1,9 @@
 ---
 import Card from "../components/Card.astro";
 import Layout from "../layouts/Layout.astro";
-import { css } from "virtual:package-name/css"
 ---
 
 <Layout title="Welcome to Astro.">
-	{Object.values(css).map(e => <style set:html={e} />)}
 	<main>
 		<svg
 			class="astro-a"
@@ -74,7 +72,7 @@ import { css } from "virtual:package-name/css"
 		color: white;
 		font-size: 20px;
 		line-height: 1.6;
-		font-family: "Roboto";
+		font-family: "DM Sans";
 	}
 	.astro-a {
 		position: absolute;
