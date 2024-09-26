@@ -3,8 +3,9 @@ import { existsSync } from "node:fs";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { AstroIntegrationLogger } from "astro";
 
-export const createCache = async (cacheDir: URL) => {
+export const createCache = async (cacheDir: URL, logger: AstroIntegrationLogger) => {
 	const { h64ToString } = await xxhash();
 
 	const generateDigest = (data: Record<string, unknown> | string) => {
@@ -34,9 +35,12 @@ export const createCache = async (cacheDir: URL) => {
 	): Promise<Buffer> => {
 		const url = new URL(path, cacheDir);
 		if (existsSync(url)) {
+			logger.info("Retrieving from cache")
 			return await readFile(url);
 		}
+		logger.info("Downloading font")
 		const data = await getData();
+		logger.info("Cached font")
 		await mkdir(dirname(fileURLToPath(url)), {
 			recursive: true,
 		});
