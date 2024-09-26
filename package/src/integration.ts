@@ -91,7 +91,6 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 				const css: Record<string, string> = {};
 
 				for (const family of options.families) {
-					// TODO: handle local images
 					const provider = options.providers.find(
 						(p) => p.name === family.provider,
 					);

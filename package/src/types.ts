@@ -66,17 +66,6 @@ export type FontFamily = {
 	// unicodeRange?: string | string[];
 	// featureSettings?: string;
 	// variationSettings?: string;
-	// } & Partial<ResolveFontFacesOptions> &
-	// 	(
-	// 		| {
-	// 				provider: string;
-	// 				src?: never;
-	// 		  }
-	// 		| {
-	// 				provider?: never;
-	// 				src: string;
-	// 		  }
-	// 	);
 } & ResolveFontFacesOptions & {
 		provider: string;
 	};

@@ -25,7 +25,6 @@ export const googleProvider = (): FontProvider => {
 
 	return {
 		name: "google",
-		// TODO: cache.set('fonts', fonts)
 		setup: async () => {
 			fonts = (
 				await fetch("https://fonts.google.com/metadata/fonts").then((res) =>

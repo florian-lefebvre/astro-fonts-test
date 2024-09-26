@@ -13,9 +13,9 @@ export default defineConfig({
 			providers: [googleProvider()],
 			families: [
 				{
-					name: "DM Sans",
+					name: "Inter",
 					provider: "google",
-					weights: [400, 500],
+					weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
 					styles: ["normal"],
 					subsets: ["latin"],
 				},
