@@ -1,13 +1,23 @@
 ---
+import { extname } from "node:path";
 import { css, hashes } from "virtual:package-name/data";
 
 interface Props {
-    families: Array<string>
-    preload: Array<string>
+	families: Array<string>;
+	preload: Array<string>;
 }
 
-const { families, preload } = Astro.props
+const { families, preload } = Astro.props;
 
-const styling = Object.entries(css).filter(([key]) => families.includes(key)).map(([, value]) => value).join("\n")
+const styling = Object.entries(css)
+	.filter(([key]) => families.includes(key))
+	.map(([, value]) => value)
+	.join("\n");
+const preloads = Object.entries(hashes)
+	.filter(([, { fontFamily }]) => preload.includes(fontFamily))
+	.map(([hash, { url }]) => ({ url: `/_fonts/${hash}`, type: extname(url).slice(1) }));
+console.log(hashes);
 ---
+
 <style set:html={styling} />
+{preloads.map(preload => <link rel="preload" href={preload.url} as="font" type={`font/${preload.type}`} crossorigin />)}

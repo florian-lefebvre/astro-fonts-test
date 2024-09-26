@@ -43,7 +43,7 @@ function extractFontSrc(
 }
 
 export const integration = (options: IntegrationOptions): AstroIntegration => {
-	const hashes = new Map<string, string>();
+	const hashes = new Map<string, { url: string; fontFamily: string }>();
 	let getFont: (hash: string, url: string) => Promise<Buffer>;
 
 	return {
@@ -56,13 +56,16 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 				);
 
 				getFont = (hash, url) =>
-					bufferCache(`./fonts/meta/${hash}.${extname(url)}`, async () => {
+					bufferCache(`./fonts/meta/${hash}${extname(url)}`, async () => {
 						return await fetch(url)
 							.then((res) => res.arrayBuffer())
 							.then((res) => Buffer.from(res));
 					});
 
-				const collectFonts = (fonts: Array<FontFaceData>) => {
+				const collectFonts = (
+					fontFamily: string,
+					fonts: Array<FontFaceData>,
+				) => {
 					const extracted: Array<{ hash: string; url: string }> = fonts.flatMap(
 						(font) => extractFontSrc(font, generateDigest),
 					);
@@ -76,7 +79,7 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 						[] as Array<{ hash: string; url: string }>,
 					);
 					for (const { hash, url } of deduplicated) {
-						hashes.set(hash, url);
+						hashes.set(hash, { fontFamily, url });
 					}
 				};
 
@@ -116,7 +119,7 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 							await provider.resolveFontFaces(family.name, fontFacesOptions),
 					);
 
-					collectFonts(result.fonts);
+					collectFonts(family.name, result.fonts);
 
 					for (const font of result.fonts) {
 						css[family.name] ??= "";
@@ -142,11 +145,11 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 						return next();
 					}
 					const hash = req.url.slice(1);
-					const url = hashes.get(hash);
-					if (!url) {
+					const mapItem = hashes.get(hash);
+					if (!mapItem) {
 						return next();
 					}
-					const data = await getFont(hash, url);
+					const data = await getFont(hash, mapItem.url);
 					res.setHeader("Cache-Control", `max-age=${ONE_YEAR_IN_SECONDS}`);
 					res.end(data);
 				});
@@ -154,9 +157,9 @@ export const integration = (options: IntegrationOptions): AstroIntegration => {
 			"astro:build:done": async (params) => {
 				const fontsDir = new URL("./_fonts/", params.dir);
 				await mkdir(fileURLToPath(fontsDir), { recursive: true });
-				for (const [hash, url] of hashes.entries()) {
+				for (const [hash, { url }] of hashes.entries()) {
 					const data = await getFont(hash, url);
-					const outputUrl = new URL(`./${hash}.${extname(url)}`, fontsDir);
+					const outputUrl = new URL(`./${hash}${extname(url)}`, fontsDir);
 					await writeFile(outputUrl, data);
 				}
 			},
